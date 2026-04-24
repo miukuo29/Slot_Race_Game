@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>美食競速賽：全球大冒險 V5</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="game-app">
+    <!-- ====== 場景 1：下注區 ====== -->
+    <div id="scene1" class="scene active">
+        <!-- 頂部透明間距，讓 UI 對齊背景圖 -->
+        <div class="s1-spacer"></div>
+
+        <!-- 頂部導航列 -->
+        <div class="s1-top-bar">
+            <button class="icon-btn" onclick="history.back()">⬅️</button>
+            <div class="s1-logo">
+                <div class="logo-title">美食競速賽</div>
+                <div class="logo-sub">全球美味大冒險</div>
+            </div>
+            <div class="top-right-btns">
+                <button class="icon-btn" onclick="alert('紀錄功能開發中')">📋<span>紀錄</span></button>
+                <button class="icon-btn" onclick="alert('排行榜功能開發中')">🏆<span>排行榜</span></button>
+            </div>
+        </div>
+
+        <!-- 倒數計時器 -->
+        <div class="s1-countdown-box">
+            <div class="countdown-label">★ 本場比賽倒數 ★</div>
+            <div class="countdown-timer" id="countdownTimer">00:28</div>
+            <div class="countdown-hint">預測本場冠軍，贏取豐厚獎勵！</div>
+        </div>
+
+        <!-- 選擇角色標題 -->
+        <div class="section-title-bar">選擇你支持的角色</div>
+
+        <!-- 角色卡片區 -->
+        <div class="char-select-grid" id="charGrid">
+            <!-- 角色 A：甜點魔法師 -->
+            <div class="char-card char-A" data-char="A">
+                <div class="char-card-header header-A">🧁 甜點魔法師</div>
+                <div class="char-img-box img-bg-A">
+                    <img src="c1.png" alt="甜點魔法師">
+                </div>
+                <div class="char-desc">使用甜點魔法治癒隊友，讓對手陷入甜蜜陷阱！</div>
+                <div class="char-stats">
+                    <div class="stat-row"><span class="stat-label">當前倍率</span></div>
+                    <div class="stat-odds">2.35</div>
+                    <div class="stat-row"><span class="stat-label">總下注</span></div>
+                    <div class="stat-total" id="totalBetA">0</div>
+                </div>
+                <button class="btn-char-select" onclick="selectChar('A')">選擇</button>
+            </div>
+
+            <!-- 角色 B：壽司忍者 -->
+            <div class="char-card char-B" data-char="B">
+                <div class="char-card-header header-B">🍣 壽司忍者</div>
+                <div class="char-img-box img-bg-B">
+                    <img src="c2.png" alt="壽司忍者">
+                </div>
+                <div class="char-desc">身手敏捷的壽司忍者，以極速與技巧取勝！</div>
+                <div class="char-stats">
+                    <div class="stat-row"><span class="stat-label">當前倍率</span></div>
+                    <div class="stat-odds">1.85</div>
+                    <div class="stat-row"><span class="stat-label">總下注</span></div>
+                    <div class="stat-total" id="totalBetB">0</div>
+                </div>
+                <button class="btn-char-select" onclick="selectChar('B')">選擇</button>
+            </div>
+
+            <!-- 角色 C：辣椒小廚神 -->
+            <div class="char-card char-C" data-char="C">
+                <div class="char-card-header header-C">🌶️ 辣椒小廚神</div>
+                <div class="char-img-box img-bg-C">
+                    <img src="c3.png" alt="辣椒小廚神">
+                </div>
+                <div class="char-desc">火辣熱情的小廚神，用超強火力征服全場！</div>
+                <div class="char-stats">
+                    <div class="stat-row"><span class="stat-label">當前倍率</span></div>
+                    <div class="stat-odds">2.70</div>
+                    <div class="stat-row"><span class="stat-label">總下注</span></div>
+                    <div class="stat-total" id="totalBetC">0</div>
+                </div>
+                <button class="btn-char-select" onclick="selectChar('C')">選擇</button>
+            </div>
+        </div>
+
+        <!-- 我的下注資訊列 -->
+        <div class="my-bet-info">
+            <div class="info-cell">
+                <div class="info-label">💰 可用金幣</div>
+                <div class="info-value gold" id="balanceDisplay">12,345,678</div>
+            </div>
+            <div class="info-cell">
+                <div class="info-label">當前選擇</div>
+                <div class="info-value" id="currentSelection">尚未選擇角色</div>
+            </div>
+            <div class="info-cell">
+                <div class="info-label">預計可贏</div>
+                <div class="info-value" id="estimatedWin">--</div>
+            </div>
+        </div>
+
+        <!-- 下注金額控制區 -->
+        <div class="bet-section">
+            <div class="section-title-bar small">下注金額</div>
+            <div class="bet-quick-btns">
+                <button class="btn-quick" onclick="setBet(10000)">10K</button>
+                <button class="btn-quick" onclick="setBet(50000)">50K</button>
+                <button class="btn-quick" onclick="setBet(100000)">100K</button>
+                <button class="btn-quick" onclick="setBet(500000)">500K</button>
+                <button class="btn-quick" onclick="setBet(1000000)">1M</button>
+            </div>
+            <div class="bet-input-row">
+                <button class="btn-adjust" onclick="adjustBet(-10000)">➖</button>
+                <div class="bet-amount-display" id="betAmountDisplay">100,000</div>
+                <button class="btn-adjust" onclick="adjustBet(10000)">➕</button>
+                <button class="btn-max" onclick="setBet('MAX')">最大</button>
+            </div>
+        </div>
+
+        <!-- AUTO + GO 按鈕 + 規則說明 -->
+        <div class="bottom-actions">
+            <button class="btn-auto-main" id="btnAuto" onclick="toggleAutoFromScene1()">
+                AUTO<span class="sub">自動循環</span>
+            </button>
+            <button class="btn-go-main" id="btnGo" onclick="startGame()" disabled>
+                確認下注
+            </button>
+            <button class="btn-rules" onclick="showRules()">❓<span>規則說明</span></button>
+        </div>
+    </div>
+
+    <!-- ====== 場景 2：賽道區 ====== -->
+    <div id="scene2" class="scene">
+        <div class="s2-top">
+            <div class="balance-box">💰 <span id="s2BalanceDisplay">12,345,678</span></div>
+            <button class="btn-auto-s2" id="btnAutoS2" onclick="toggleAuto()">AUTO</button>
+        </div>
+
+        <div class="s2-header" id="s2Header">
+            <div class="s2-char" id="s2-char-A"><div class="name">🧁 甜點</div><div id="s2-bet-A">--</div></div>
+            <div class="s2-char" id="s2-char-B"><div class="name">🍣 壽司</div><div id="s2-bet-B">--</div></div>
+            <div class="s2-char" id="s2-char-C"><div class="name">🌶️ 辣椒</div><div id="s2-bet-C">--</div></div>
+        </div>
+
+        <div class="mahjong-collect" id="mahjongCollect">
+            🀄 麻將收集：<span id="mjWan" class="mj-item">萬 ❌</span> <span id="mjTong" class="mj-item">筒 ❌</span> <span id="mjTiao" class="mj-item">條 ❌</span>
+        </div>
+
+        <div class="board-container" id="board">
+            <div class="slot-grid" id="slotGrid"></div>
+        </div>
+
+        <div class="log-area" id="eventLog"></div>
+    </div>
+
+    <!-- ====== 場景 3：Bonus Game ====== -->
+    <div id="scene3" class="scene">
+        <div class="bonus-scene" id="bonusContent"></div>
+    </div>
+
+    <!-- ====== 結算彈出視窗 ====== -->
+    <div class="result-modal" id="resultModal">
+        <div class="result-box">
+            <h2 id="resultTitle">WIN!</h2>
+            <p id="resultDesc"></p>
+            <p id="resultPrize" style="color: #1b5e20; font-size: 1.8rem; font-weight: 900;"></p>
+            <p id="bonusInfo" style="font-size: 1rem; color: #e65100; display:none;"></p>
+            <p style="font-size: 0.9rem; color: #5d4037; margin-top: 20px;" id="returnCountdown">5秒後返回大廳...</p>
+            <button class="btn-cancel-auto" id="btnCancelAuto" onclick="cancelAuto()" style="display:none;">🛑 取消 Auto，返回大廳</button>
+        </div>
+    </div>
+
+    <!-- ====== 規則說明彈窗 ====== -->
+    <div class="rules-modal" id="rulesModal">
+        <div class="rules-box">
+            <h2>📖 遊戲規則</h2>
+            <div class="rules-content">
+                <p><strong>基本玩法：</strong>選擇一位角色下注，按 GO 開始比賽。</p>
+                <p><strong>盤面：</strong>5列(回合) x 3欄(角色)，每格有不同 Symbol。</p>
+                <hr>
+                <p>⬆️ <strong>+1</strong> 前進一格</p>
+                <p>⏫ <strong>+2</strong> 前進兩格</p>
+                <p>🎲 <strong>Dice</strong> 隨機 +0~+6</p>
+                <p>🌀 <strong>Chaos Dice</strong> 所有人位置隨機洗牌</p>
+                <p>⛔ <strong>Block</strong> 阻擋一位對手本回合</p>
+                <p>🔄 <strong>Swap</strong> 與對手交換位置</p>
+                <p>🚀 <strong>Boost</strong> 下回合額外 +1</p>
+                <p>👯 <strong>Pair</strong> 同回合有兩個相同 symbol → 獎金 x2</p>
+                <p>📏 <strong>Straight</strong> 所有人 +1</p>
+                <p>🀄🀙🀇 <strong>麻將</strong> 收集滿萬/筒/條 → 進入 Bonus Game</p>
+                <hr>
+                <p><strong>Bonus Game：</strong></p>
+                <p>🎪 Food Festival → 加速 +1~+3</p>
+                <p>⭐ Michelin Award → 獎金 x10</p>
+            </div>
+            <button class="btn-close-rules" onclick="closeRules()">關閉</button>
+        </div>
+    </div>
+</div>
+
+<script src="main.js"></script>
+</body>
+</html>
