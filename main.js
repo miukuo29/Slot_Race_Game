@@ -21,7 +21,7 @@ let mahjongCollected = { wan: false, tong: false, tiao: false };
 const oddsMap = { A: 2.35, B: 1.85, C: 2.70 };
 const nameMap = { A: '🧁 甜點魔法師', B: '🍣 壽司忍者', C: '🌶️ 辣椒小廚神' };
 
-// --- Symbol 定義 ---
+// --- Symbol 定義 (盤面用，不含 boost/pair/straight，這三個改放賽道格子) ---
 const SYMBOLS = [
     { id: 'plus1',     icon: '⬆️', label: '+1',       weight: 20 },
     { id: 'plus2',     icon: '⏫', label: '+2',       weight: 12 },
@@ -29,12 +29,9 @@ const SYMBOLS = [
     { id: 'chaosDice', icon: '🌀', label: 'Chaos',    weight: 5  },
     { id: 'block',     icon: '⛔', label: 'Block',    weight: 8  },
     { id: 'swap',      icon: '🔄', label: 'Swap',     weight: 6  },
-    { id: 'boost',     icon: '🚀', label: 'Boost',    weight: 8  },
-    { id: 'pair',      icon: '👯', label: 'Pair',     weight: 7  },
-    { id: 'straight',  icon: '📏', label: 'Straight', weight: 5  },
-    { id: 'mjWan',     icon: '🀄', label: '萬',       weight: 4  },
-    { id: 'mjTong',    icon: '🀙', label: '筒',       weight: 4  },
-    { id: 'mjTiao',    icon: '🀇', label: '條',       weight: 4  },
+    { id: 'mjWan',     icon: '🀄', label: '萬',       weight: 5  },
+    { id: 'mjTong',    icon: '🀙', label: '筒',       weight: 5  },
+    { id: 'mjTiao',    icon: '🀇', label: '條',       weight: 5  },
 ];
 
 function randomSymbol() {
@@ -220,51 +217,146 @@ function closeRules() {
 }
 
 // ==========================================
-// 賽道建置
+// 賽道建置 (12格方形環繞)
 // ==========================================
+// 12 格座標 (方形環繞，順時針)
 const trackCoords = [
-    { t: 2, l: 2, label: 'START', special: 'start' },
-    { t: 2, l: 30, label: '事件' },
-    { t: 2, l: 58, label: '加速' },
-    { t: 2, l: 82, label: '角落' },
-    { t: 42, l: 82, label: '事件' },
-    { t: 82, l: 82, label: '角落' },
-    { t: 82, l: 58, label: '阻擋' },
-    { t: 82, l: 30, label: '事件' },
-    { t: 82, l: 2, label: 'Near Miss', special: 'nm' },
-    { t: 42, l: 2, label: 'FINISH', special: 'finish' },
+    { t: 2,  l: 2,  label: 'START' },  // 0: 左上
+    { t: 2,  l: 22, label: '' },        // 1
+    { t: 2,  l: 42, label: '' },        // 2
+    { t: 2,  l: 62, label: '' },        // 3
+    { t: 2,  l: 82, label: '' },        // 4: 右上
+    { t: 30, l: 82, label: '' },        // 5
+    { t: 58, l: 82, label: '' },        // 6
+    { t: 82, l: 82, label: '' },        // 7: 右下
+    { t: 82, l: 55, label: '' },        // 8
+    { t: 82, l: 28, label: '' },        // 9
+    { t: 82, l: 2,  label: '' },        // 10: 左下
+    { t: 42, l: 2,  label: 'FINISH' },  // 11: 終點
 ];
 
+// 賽道格子上的特殊 symbol (每局隨機)
+const TRACK_SPECIALS = [
+    { id: 'boost',    icon: '🚀', label: 'Boost',    desc: '下回合額外 +1！' },
+    { id: 'pair',     icon: '👯', label: 'Pair',     desc: '獎金 x2！' },
+    { id: 'straight', icon: '📏', label: 'Straight', desc: '所有人 +1！' },
+];
+
+// 美食裝飾 emoji
+const FOOD_EMOJIS = ['🍣', '🍰', '🍜', '🍕', '🌮', '🍔', '🧁', '🍩', '🥟', '🍱', '🍦', '🥐'];
+
+let trackCellData = []; // 每局的格子資料
+
 function buildTrack() {
-    const board = $('board');
-    trackCoords.forEach(pos => {
-        const cell = document.createElement('div');
-        cell.className = 'cell';
-        cell.style.top = pos.t + '%';
-        cell.style.left = pos.l + '%';
-        if (pos.special === 'start') cell.classList.add('cell-start');
-        if (pos.special === 'finish') cell.classList.add('cell-finish');
-        cell.innerText = pos.label;
-        board.appendChild(cell);
-    });
+    randomizeTrackCells();
+    renderTrackCells();
+
+    // 建立 Tokens
     ['A', 'B', 'C'].forEach((char, i) => {
         const token = document.createElement('div');
         token.className = `token token-${char}`;
         token.id = `token-${char}`;
-        token.innerText = char;
+        token.innerText = `${i + 1}`;
         setTokenPosition(token, 0, i);
-        board.appendChild(token);
+        $('board').appendChild(token);
         tokens[char] = token;
     });
 }
 
+function randomizeTrackCells() {
+    // 初始化 12 格
+    trackCellData = trackCoords.map((coord, i) => ({
+        ...coord,
+        index: i,
+        special: null,  // boost/pair/straight
+        food: null,      // 美食 emoji
+    }));
+
+    // 格子 0 (START) 和 11 (FINISH) 不放東西
+    const availableIndices = [];
+    for (let i = 1; i <= 10; i++) availableIndices.push(i);
+
+    // 隨機 3 格放 Boost/Pair/Straight
+    const shuffled = [...availableIndices].sort(() => Math.random() - 0.5);
+    const specialIndices = shuffled.slice(0, 3);
+    specialIndices.forEach((idx, si) => {
+        trackCellData[idx].special = TRACK_SPECIALS[si];
+        trackCellData[idx].label = TRACK_SPECIALS[si].icon;
+    });
+
+    // 剩下的空格中隨機 6 格放美食圖
+    const remaining = shuffled.slice(3);
+    const foodIndices = remaining.slice(0, Math.min(6, remaining.length));
+    const shuffledFoods = [...FOOD_EMOJIS].sort(() => Math.random() - 0.5);
+    foodIndices.forEach((idx, fi) => {
+        trackCellData[idx].food = shuffledFoods[fi % shuffledFoods.length];
+        if (!trackCellData[idx].label) trackCellData[idx].label = shuffledFoods[fi % shuffledFoods.length];
+    });
+}
+
+function renderTrackCells() {
+    const board = $('board');
+    // 移除舊格子 (保留 slot-grid 和 headers)
+    board.querySelectorAll('.cell').forEach(c => c.remove());
+
+    trackCellData.forEach((data, i) => {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.id = `cell-${i}`;
+        cell.style.top = data.t + '%';
+        cell.style.left = data.l + '%';
+
+        if (i === 0) cell.classList.add('cell-start');
+        if (i === 11) cell.classList.add('cell-finish');
+        if (data.special) cell.classList.add('cell-special');
+        if (data.food) cell.classList.add('cell-food');
+
+        cell.innerHTML = data.label || `${i}`;
+        board.appendChild(cell);
+    });
+}
+
 function setTokenPosition(token, spaceIndex, charOffsetIndex) {
-    if (spaceIndex > 9) spaceIndex = 9;
+    if (spaceIndex > 11) spaceIndex = 11;
     const pos = trackCoords[spaceIndex];
     const offsetX = [2, 15, 30][charOffsetIndex];
     const offsetY = [2, 25, 15][charOffsetIndex];
     token.style.top = `calc(${pos.t}% + ${offsetY}px)`;
     token.style.left = `calc(${pos.l}% + ${offsetX}px)`;
+}
+
+// 角色踩到特殊格子時的處理
+async function checkCellEffect(char, cellIndex, raceState) {
+    const cellData = trackCellData[cellIndex];
+    if (!cellData || !cellData.special) return;
+
+    const cellEl = $(`cell-${cellIndex}`);
+    const charIdx = ['A', 'B', 'C'].indexOf(char);
+
+    // 觸發特效動畫
+    if (cellEl) {
+        cellEl.classList.add('cell-triggered');
+        setTimeout(() => cellEl.classList.remove('cell-triggered'), 1200);
+    }
+
+    switch (cellData.special.id) {
+        case 'boost':
+            raceState.boostNext[char] = true;
+            log(`✨ ${nameMap[char]} 踩到 🚀 Boost！下回合額外 +1！`);
+            break;
+        case 'pair':
+            raceState.pairMultiplier *= 2;
+            log(`✨ ${nameMap[char]} 踩到 👯 Pair！獎金 x2！`);
+            break;
+        case 'straight':
+            log(`✨ ${nameMap[char]} 踩到 📏 Straight！所有人 +1！`);
+            ['A', 'B', 'C'].forEach((c, i) => {
+                raceState.pos[c] = Math.min(raceState.pos[c] + 1, 11);
+                setTokenPosition(tokens[c], raceState.pos[c], i);
+            });
+            break;
+    }
+    await sleep(400);
 }
 
 // ==========================================
@@ -291,32 +383,36 @@ function renderBoard(board) {
 
     const boardEl = $('board');
 
+    // 欄標題 (角色 1/2/3)
     const colHeaders = document.createElement('div');
     colHeaders.className = 'slot-col-headers';
-    for (let c = 0; c < 5; c++) {
+    for (let c = 0; c < 3; c++) {
         const h = document.createElement('div');
         h.className = 'slot-col-header';
-        h.innerText = `R${c + 1}`;
+        h.innerText = `${c + 1}`;
         colHeaders.appendChild(h);
     }
     boardEl.appendChild(colHeaders);
 
+    // 列標題 (回合 R1~R5)
     const rowHeaders = document.createElement('div');
     rowHeaders.className = 'slot-row-headers';
-    ['A', 'B', 'C'].forEach(char => {
+    for (let r = 0; r < 5; r++) {
         const h = document.createElement('div');
         h.className = 'slot-row-header';
-        h.innerText = char;
+        h.innerText = `R${r + 1}`;
         rowHeaders.appendChild(h);
-    });
+    }
     boardEl.appendChild(rowHeaders);
 
-    for (let row = 0; row < 3; row++) {
-        for (let col = 0; col < 5; col++) {
+    // 填入盤面: 3欄(角色) x 5列(回合)
+    // grid order: row-first → 先填 round0 的 3 個角色，再 round1 的 3 個...
+    for (let round = 0; round < 5; round++) {
+        for (let ci = 0; ci < 3; ci++) {
             const item = document.createElement('div');
             item.className = 'slot-item';
-            item.id = `slot-${row}-${col}`;
-            const sym = board[row][col];
+            item.id = `slot-${ci}-${round}`;
+            const sym = board[ci][round];
             item.innerHTML = `<span class="symbol-icon">${sym.icon}</span><span class="symbol-label">${sym.label}</span>`;
             slotGrid.appendChild(item);
         }
@@ -400,12 +496,6 @@ function calculateInstantResult(board) {
 
     for (let round = 0; round < 5; round++) {
         const roundSymbols = [board[0][round], board[1][round], board[2][round]];
-        const ids = roundSymbols.map(s => s.id);
-
-        // Pair
-        if (ids.some((id, i) => ids.indexOf(id) !== i)) pairMultiplier *= 2;
-
-        const hasStraight = roundSymbols.some(s => s.id === 'straight');
 
         // Chaos Dice
         if (roundSymbols.some(s => s.id === 'chaosDice')) {
@@ -417,7 +507,6 @@ function calculateInstantResult(board) {
             chars.forEach((c, i) => { pos[c] = positions[i]; });
         }
 
-        // 逐角色
         for (let ci = 0; ci < 3; ci++) {
             const char = chars[ci];
             const sym = board[ci][round];
@@ -440,7 +529,6 @@ function calculateInstantResult(board) {
                     const tmp = pos[char]; pos[char] = pos[sw]; pos[sw] = tmp;
                     break;
                 }
-                case 'boost': boostNext[char] = true; break;
                 case 'mjWan': mahjongCollected.wan = true; break;
                 case 'mjTong': mahjongCollected.tong = true; break;
                 case 'mjTiao': mahjongCollected.tiao = true; break;
@@ -449,19 +537,28 @@ function calculateInstantResult(board) {
             if (!['swap', 'chaosDice', 'blocked', 'block'].includes(sym.id) || sym.id === 'block') {
                 if (sym.id !== 'block' && sym.id !== 'blocked') {
                     if (boostNext[char] && round > 0) { move += 1; boostNext[char] = false; }
-                    pos[char] = Math.min(pos[char] + move, 9);
+                    pos[char] = Math.min(pos[char] + move, 11);
+                    // 檢查格子效果 (instant)
+                    const cellData = trackCellData[pos[char]];
+                    if (cellData && cellData.special) {
+                        switch (cellData.special.id) {
+                            case 'boost': boostNext[char] = true; break;
+                            case 'pair': pairMultiplier *= 2; break;
+                            case 'straight':
+                                chars.forEach(c => { pos[c] = Math.min(pos[c] + 1, 11); });
+                                break;
+                        }
+                    }
                 }
             }
-        }
-
-        if (hasStraight) {
-            chars.forEach(c => { pos[c] = Math.min(pos[c] + 1, 9); });
         }
     }
 
     updateMahjongUI();
     const sorted = [...chars].sort((a, b) => pos[b] - pos[a]);
-    return { winner: sorted[0], positions: pos, pairMultiplier };
+    const topPos = pos[sorted[0]];
+    const isTie = sorted.filter(c => pos[c] === topPos).length > 1;
+    return { winner: isTie ? null : sorted[0], positions: pos, pairMultiplier, isTie };
 }
 
 function setupScene2() {
@@ -473,8 +570,10 @@ function setupScene2() {
     });
     $('eventLog').innerHTML = '';
     updateMahjongUI();
-    // 同步 Auto 按鈕狀態
     syncAutoButtons();
+    // 每局重新隨機賽道格子
+    randomizeTrackCells();
+    renderTrackCells();
 }
 
 function updateMahjongUI() {
@@ -494,6 +593,7 @@ async function runRace(board) {
     const chars = ['A', 'B', 'C'];
     const boostNext = { A: false, B: false, C: false };
     let pairMultiplier = 1;
+    const raceState = { pos, boostNext, pairMultiplier };
 
     for (let round = 0; round < 5; round++) {
         log(`▶️ 第 ${round + 1} 回合`);
@@ -502,15 +602,6 @@ async function runRace(board) {
 
         const roundSymbols = [];
         for (let ci = 0; ci < 3; ci++) roundSymbols.push(board[ci][round]);
-
-        // Pair 檢查
-        const ids = roundSymbols.map(s => s.id);
-        if (ids.some((id, i) => ids.indexOf(id) !== i)) {
-            pairMultiplier *= 2;
-            log('👯 Pair! 同回合相同 symbol，獎金 x2！');
-        }
-
-        const hasStraight = roundSymbols.some(s => s.id === 'straight');
 
         // Chaos Dice
         if (roundSymbols.some(s => s.id === 'chaosDice')) {
@@ -554,38 +645,35 @@ async function runRace(board) {
                     await sleep(300);
                     break;
                 }
-                case 'boost': boostNext[char] = true; log(`${nameMap[char]} 🚀 Boost!`); break;
-                case 'pair': log(`${nameMap[char]} 👯 Pair`); break;
-                case 'straight': log(`${nameMap[char]} 📏 Straight`); break;
                 case 'mjWan': mahjongCollected.wan = true; log(`${nameMap[char]} 🀄 萬！`); updateMahjongUI(); break;
                 case 'mjTong': mahjongCollected.tong = true; log(`${nameMap[char]} 🀙 筒！`); updateMahjongUI(); break;
                 case 'mjTiao': mahjongCollected.tiao = true; log(`${nameMap[char]} 🀇 條！`); updateMahjongUI(); break;
             }
 
             if (!blocked && !['swap', 'chaosDice', 'blocked'].includes(sym.id)) {
-                if (boostNext[char] && round > 0) { move += 1; log(`${nameMap[char]} 🚀 Boost +1`); boostNext[char] = false; }
-                pos[char] = Math.min(pos[char] + move, 9);
+                if (raceState.boostNext[char] && round > 0) { move += 1; log(`${nameMap[char]} 🚀 Boost +1`); raceState.boostNext[char] = false; }
+                pos[char] = Math.min(pos[char] + move, 11);
                 setTokenPosition(tokens[char], pos[char], ci);
+                // 檢查踩到的格子是否有特殊效果
+                await checkCellEffect(char, pos[char], raceState);
             }
             await sleep(250);
         }
 
-        if (hasStraight) {
-            chars.forEach((c, i) => { pos[c] = Math.min(pos[c] + 1, 9); setTokenPosition(tokens[c], pos[c], i); });
-            log('📏 Straight：所有人 +1！');
-            await sleep(300);
-        }
         await sleep(350);
     }
 
     const sorted = [...chars].sort((a, b) => pos[b] - pos[a]);
-    return { winner: sorted[0], positions: pos, pairMultiplier };
+    const topPos = pos[sorted[0]];
+    const isTie = sorted.filter(c => pos[c] === topPos).length > 1;
+    return { winner: isTie ? null : sorted[0], positions: pos, pairMultiplier: raceState.pairMultiplier, isTie };
 }
 
-function highlightColumn(colIndex) {
+function highlightColumn(roundIndex) {
+    // 高亮當前回合的整列（現在回合是 row）
     document.querySelectorAll('.slot-item').forEach(el => el.style.outline = 'none');
-    for (let row = 0; row < 3; row++) {
-        const el = $(`slot-${row}-${colIndex}`);
+    for (let ci = 0; ci < 3; ci++) {
+        const el = $(`slot-${ci}-${roundIndex}`);
         if (el) el.style.outline = '3px solid #ff5722';
     }
 }
@@ -653,37 +741,61 @@ let autoReturnInt = null; // 用來讓 cancelAuto 能清除倒數
 // 結算
 // ==========================================
 function showResult(winnerId, finalPositions, bonusMultiplier = 1, bonusType = null) {
-    const isWin = (selectedChar === winnerId);
-    let winAmount = 0;
-
     const title = $('resultTitle');
     const desc = $('resultDesc');
     const prize = $('resultPrize');
     const bonusInfo = $('bonusInfo');
     const cancelBtn = $('btnCancelAuto');
 
-    desc.innerText = `${nameMap[winnerId]} 率先抵達終點！`;
     bonusInfo.style.display = 'none';
 
-    if (isWin) {
+    // 檢查是否平手
+    const chars = ['A', 'B', 'C'];
+    const topPos = Math.max(...chars.map(c => finalPositions[c]));
+    const topChars = chars.filter(c => finalPositions[c] === topPos);
+    const isTie = topChars.length > 1 && topChars.includes(selectedChar);
+    const isWin = winnerId && (selectedChar === winnerId);
+    let winAmount = 0;
+
+    if (isTie) {
+        // 平手：退回本金
+        const tieMessages = [
+            '🤝 勢均力敵！大家都太強了啦！',
+            '🍜 煮到一半瓦斯沒了，誰都沒贏！',
+            '🏃 撞線瞬間分不出高下！',
+            '⚡ 三位大廚實力相當，裁判也傻眼！',
+            '🎭 這場比賽...居然是平手收場！'
+        ];
+        balance += currentBet; // 退回本金
+        title.innerText = '🤝 DRAW! 🤝';
+        title.style.color = '#29b6f6';
+        desc.innerText = tieMessages[Math.floor(Math.random() * tieMessages.length)];
+        prize.innerText = `本金退回 ${currentBet.toLocaleString()}`;
+        prize.style.color = '#29b6f6';
+    } else if (isWin) {
         winAmount = Math.floor(currentBet * oddsMap[selectedChar] * bonusMultiplier);
         balance += winAmount;
         title.innerText = '🎉 WIN! 🎉';
         title.style.color = '#ffeb3b';
+        desc.innerText = `${nameMap[winnerId]} 率先抵達終點！`;
         prize.innerText = `贏得 + ${winAmount.toLocaleString()}`;
+        prize.style.color = '#1b5e20';
         if (bonusType === 'michelin') { bonusInfo.style.display = 'block'; bonusInfo.innerText = '⭐ Michelin Award 獎金 x10！'; }
         else if (bonusType === 'foodFestival') { bonusInfo.style.display = 'block'; bonusInfo.innerText = '🎪 Food Festival 加速效果已套用！'; }
     } else {
-        if (finalPositions[selectedChar] === 8) {
+        desc.innerText = winnerId ? `${nameMap[winnerId]} 率先抵達終點！` : '比賽結束！';
+        if (finalPositions[selectedChar] >= 9 && finalPositions[selectedChar] <= 10) {
             winAmount = Math.floor(currentBet * 0.2);
             balance += winAmount;
             title.innerText = '🔥 NEAR MISS! 🔥';
             title.style.color = '#ff9800';
             prize.innerText = `差一點！安慰獎 + ${winAmount.toLocaleString()}`;
+            prize.style.color = '#ff9800';
         } else {
             title.innerText = '💀 YOU LOSE 💀';
             title.style.color = '#e0e0e0';
             prize.innerText = '下次再接再厲！';
+            prize.style.color = '#e0e0e0';
         }
     }
 
