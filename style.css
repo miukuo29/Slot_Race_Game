@@ -57,11 +57,12 @@ body {
     background: url('sence1_UI.png') center top / cover no-repeat;
     padding: 0;
     position: relative;
+    overflow: hidden; /* 不允許滾動，所有內容必須在一屏內 */
 }
 
-/* 頂部間距，讓 UI 往下對齊背景圖元素 */
+/* 頂部間距 */
 .s1-spacer {
-    height: 8px;
+    height: 6px;
     flex-shrink: 0;
 }
 
@@ -70,9 +71,10 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
+    padding: 6px 12px;
     background: linear-gradient(180deg, rgba(139,94,52,0.85), rgba(160,113,62,0.85));
     border-bottom: 3px solid var(--gold-mid);
+    flex-shrink: 0;
 }
 .icon-btn {
     background: rgba(0,0,0,0.3);
@@ -111,8 +113,9 @@ body {
 /* 倒數計時 */
 .s1-countdown-box {
     text-align: center;
-    padding: 10px 15px 8px;
+    padding: 6px 15px 4px;
     background: rgba(245,230,200,0.7);
+    flex-shrink: 0;
 }
 .countdown-label {
     font-size: 0.75rem;
@@ -121,12 +124,12 @@ body {
     letter-spacing: 2px;
 }
 .countdown-timer {
-    font-size: 2.8rem;
+    font-size: 2.4rem;
     font-weight: 900;
     color: var(--brown-dark);
     letter-spacing: 4px;
     text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
-    line-height: 1.1;
+    line-height: 1;
     font-variant-numeric: tabular-nums;
 }
 .countdown-hint {
@@ -140,16 +143,17 @@ body {
     background: linear-gradient(90deg, #6d4c2a, #8b6340, #6d4c2a);
     color: var(--gold-light);
     text-align: center;
-    padding: 6px 0;
-    font-size: 0.85rem;
+    padding: 4px 0;
+    font-size: 0.8rem;
     font-weight: bold;
     letter-spacing: 3px;
     border-top: 2px solid var(--gold-mid);
     border-bottom: 2px solid var(--gold-mid);
+    flex-shrink: 0;
 }
 .section-title-bar.small {
-    font-size: 0.75rem;
-    padding: 5px 0;
+    font-size: 0.7rem;
+    padding: 3px 0;
     letter-spacing: 2px;
 }
 
@@ -157,8 +161,11 @@ body {
 .char-select-grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: 6px;
-    padding: 8px 10px;
+    gap: 5px;
+    padding: 5px 8px;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
 }
 .char-card {
     background: rgba(255,255,255,0.92);
@@ -200,11 +207,13 @@ body {
     align-items: center;
     position: relative;
     overflow: hidden;
-    padding: 6px;
+    padding: 4px;
+    flex: 1;
+    min-height: 0;
 }
 .char-img-box img {
     width: 100%;
-    height: auto;
+    height: 100%;
     max-height: 140px;
     object-fit: contain;
     display: block;
@@ -218,13 +227,14 @@ body {
 */
 
 .char-desc {
-    font-size: 0.55rem;
+    font-size: 0.5rem;
     color: #666;
-    padding: 4px 5px;
-    line-height: 1.3;
-    min-height: 32px;
+    padding: 2px 4px;
+    line-height: 1.2;
+    flex-shrink: 1;
+    overflow: hidden;
 }
-.char-stats { padding: 2px 6px 4px; }
+.char-stats { padding: 1px 5px 2px; flex-shrink: 0; }
 .stat-row { font-size: 0.6rem; color: #888; }
 .stat-label { font-weight: bold; }
 .stat-odds {
@@ -264,37 +274,38 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 0;
-    margin: 0 10px;
+    margin: 0 8px;
     background: linear-gradient(135deg, #5d4037, #4e342e);
-    border-radius: 10px;
+    border-radius: 8px;
     border: 2px solid var(--gold-mid);
     overflow: hidden;
+    flex-shrink: 0;
 }
 .info-cell {
-    padding: 6px 4px;
+    padding: 4px 3px;
     text-align: center;
     border-right: 1px solid rgba(255,255,255,0.15);
 }
 .info-cell:last-child { border-right: none; }
-.info-label { font-size: 0.6rem; color: #bcaaa4; margin-bottom: 2px; }
-.info-value { font-size: 0.8rem; font-weight: bold; color: #fff; }
-.info-value.gold { color: #ffd54f; font-size: 0.85rem; }
+.info-label { font-size: 0.55rem; color: #bcaaa4; margin-bottom: 1px; }
+.info-value { font-size: 0.75rem; font-weight: bold; color: #fff; }
+.info-value.gold { color: #ffd54f; font-size: 0.8rem; }
 
 /* ====== 下注金額區 ====== */
-.bet-section { padding: 6px 10px 4px; background: rgba(245,230,200,0.6); }
+.bet-section { padding: 4px 8px 2px; background: rgba(245,230,200,0.6); flex-shrink: 0; }
 .bet-quick-btns {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 5px;
-    margin: 6px 0;
+    gap: 4px;
+    margin: 4px 0;
 }
 .btn-quick {
     background: linear-gradient(180deg, #e8d5b7, #d4b896);
     border: 2px solid var(--card-border);
-    padding: 8px 0;
+    padding: 6px 0;
     border-radius: 8px;
     font-weight: bold;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     cursor: pointer;
     color: var(--brown-dark);
     transition: all 0.15s;
@@ -311,33 +322,34 @@ body {
 .bet-input-row {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin: 6px 0;
+    gap: 5px;
+    margin: 4px 0;
     background: var(--brown-dark);
     border-radius: 10px;
-    padding: 5px 8px;
+    padding: 4px 6px;
     border: 2px solid var(--gold-mid);
 }
 .btn-adjust {
     background: linear-gradient(180deg, #78909c, #546e7a);
     color: white;
     border: none;
-    width: 38px;
-    height: 38px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
-    font-size: 1.1rem;
+    font-size: 1rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.15s;
+    flex-shrink: 0;
 }
 .btn-adjust:hover { filter: brightness(1.2); }
 .btn-adjust:active { transform: scale(0.9); }
 .bet-amount-display {
     flex: 1;
     text-align: center;
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     font-weight: 900;
     color: #ffd54f;
     letter-spacing: 1px;
@@ -360,14 +372,15 @@ body {
 .bottom-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 10px 10px;
+    gap: 6px;
+    padding: 4px 8px 8px;
     background: rgba(245,230,200,0.6);
+    flex-shrink: 0;
 }
 .btn-auto-main {
     flex: 0.6;
-    padding: 10px 0;
-    font-size: 1.1rem;
+    padding: 8px 0;
+    font-size: 1rem;
     font-weight: 900;
     letter-spacing: 2px;
     color: white;
@@ -398,8 +411,8 @@ body {
 }
 .btn-go-main {
     flex: 1;
-    padding: 14px 0;
-    font-size: 1.3rem;
+    padding: 10px 0;
+    font-size: 1.2rem;
     font-weight: 900;
     letter-spacing: 4px;
     color: white;
@@ -837,37 +850,73 @@ body {
     100% { transform: translateY(900px) rotate(720deg); opacity: 0.3; }
 }
 
-/* ====== 手機 RWD 適配 ====== */
-@media screen and (max-height: 750px) {
-    .s1-spacer { height: 4px; }
-    .s1-countdown-box { padding: 6px 10px 4px; }
-    .countdown-timer { font-size: 2.2rem; }
-    .char-select-grid { gap: 4px; padding: 5px 8px; }
-    .char-img-box { padding: 3px; }
-    .char-img-box img { max-height: 90px; }
-    .char-desc { min-height: 24px; font-size: 0.5rem; padding: 2px 4px; }
-    .char-stats { padding: 1px 4px 2px; }
-    .stat-odds { font-size: 1.1rem; }
-    .btn-char-select { padding: 5px 0; font-size: 0.75rem; }
-    .my-bet-info { margin: 0 8px; }
-    .info-cell { padding: 4px 3px; }
-    .info-label { font-size: 0.55rem; }
-    .info-value { font-size: 0.7rem; }
-    .bet-section { padding: 4px 8px 2px; }
-    .bet-quick-btns { margin: 4px 0; gap: 3px; }
-    .btn-quick { padding: 6px 0; font-size: 0.7rem; }
-    .bet-input-row { margin: 4px 0; padding: 3px 6px; }
-    .bet-amount-display { font-size: 1.2rem; }
-    .bottom-actions { padding: 4px 8px 6px; }
-    .btn-go-main { padding: 10px 0; font-size: 1.1rem; }
-    .btn-auto-main { padding: 8px 0; font-size: 1rem; }
+/* ====== iPhone RWD 適配 (近5年所有機型) ====== */
+
+/* iPhone SE 3 (375x667) - 最矮的螢幕 */
+@media screen and (max-height: 680px) {
+    .s1-spacer { height: 2px; }
+    .s1-top-bar { padding: 3px 8px; }
+    .logo-title { font-size: 1rem; }
+    .s1-countdown-box { padding: 3px 10px 2px; }
+    .countdown-timer { font-size: 1.6rem; }
+    .countdown-hint { display: none; }
+    .section-title-bar { padding: 2px 0; font-size: 0.7rem; }
+    .char-select-grid { gap: 3px; padding: 3px 6px; }
+    .char-card-header { padding: 2px; font-size: 0.6rem; }
+    .char-img-box { padding: 2px; }
+    .char-desc { display: none; }
+    .stat-odds { font-size: 1rem; }
+    .stat-total { font-size: 0.65rem; margin-bottom: 2px; }
+    .btn-char-select { padding: 4px 0; font-size: 0.7rem; }
+    .my-bet-info { margin: 0 6px; }
+    .info-cell { padding: 3px 2px; }
+    .bet-quick-btns { margin: 2px 0; }
+    .btn-quick { padding: 4px 0; font-size: 0.65rem; }
+    .bet-input-row { margin: 2px 0; padding: 2px 5px; }
+    .btn-adjust { width: 28px; height: 28px; font-size: 0.85rem; }
+    .bet-amount-display { font-size: 1rem; }
+    .btn-max { padding: 5px 8px; font-size: 0.7rem; }
+    .bottom-actions { padding: 3px 6px 5px; }
+    .btn-go-main { padding: 8px 0; font-size: 1rem; }
+    .btn-auto-main { padding: 6px 0; font-size: 0.85rem; }
 }
 
-@media screen and (max-height: 670px) {
-    .s1-spacer { height: 2px; }
-    .s1-top-bar { padding: 4px 8px; }
-    .countdown-timer { font-size: 1.8rem; }
-    .char-img-box img { max-height: 70px; }
-    .char-desc { display: none; }
-    .section-title-bar { padding: 4px 0; font-size: 0.75rem; }
+/* iPhone 12 mini / 13 mini (375x812) */
+@media screen and (min-height: 681px) and (max-height: 820px) {
+    .countdown-timer { font-size: 2rem; }
+    .char-desc { font-size: 0.45rem; -webkit-line-clamp: 2; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+    .stat-odds { font-size: 1.1rem; }
+}
+
+/* iPhone 14/15/16 (390-402 x 844-874) */
+@media screen and (min-height: 821px) and (max-height: 880px) {
+    .countdown-timer { font-size: 2.2rem; }
+}
+
+/* iPhone Pro Max / 16 Pro Max (430-440 x 932-956) - 最大螢幕 */
+@media screen and (min-height: 920px) {
+    .s1-spacer { height: 10px; }
+    .s1-countdown-box { padding: 10px 15px 8px; }
+    .countdown-timer { font-size: 2.8rem; }
+    .char-select-grid { gap: 8px; padding: 8px 12px; }
+    .char-img-box { padding: 8px; }
+    .char-desc { font-size: 0.55rem; }
+    .stat-odds { font-size: 1.4rem; }
+    .info-cell { padding: 6px 4px; }
+    .info-label { font-size: 0.6rem; }
+    .info-value { font-size: 0.85rem; }
+    .btn-quick { padding: 8px 0; font-size: 0.8rem; }
+    .bet-amount-display { font-size: 1.5rem; }
+    .btn-go-main { padding: 14px 0; font-size: 1.3rem; }
+    .bottom-actions { padding: 6px 10px 12px; }
+}
+
+/* 安全區域 (iPhone X 以上的瀏海/動態島) */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .bottom-actions {
+        padding-bottom: calc(6px + env(safe-area-inset-bottom));
+    }
+    .game-app {
+        padding-top: env(safe-area-inset-top);
+    }
 }
